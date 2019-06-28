@@ -119,7 +119,7 @@ def download_asset(session,course_id,lecture,directory=os.getcwd()):
 
 def download_course(session,course_id,directory=os.getcwd()):
     if not os.path.isdir(os.path.join(directory,course_id[1])):
-        os.mkdir(os.path.join(directory,course_id[1]))
+        os.makedirs(os.path.join(directory,course_id[1]))
     directory = os.path.join(directory,course_id[1])
     lectures = get_course_lecture_info(session,course_id[0])
     chapters = [chap for chap in lectures if chap[0]=='chapter']
@@ -130,7 +130,7 @@ def download_course(session,course_id,directory=os.getcwd()):
         if lecture[0]=='chapter':
         	print("{0}/{1} Downloading... Title : {2}".format(i,len(lectures),lecture[2]))
         	if not os.path.isdir(chapters_dir[lecture[2]]):
-        		os.mkdir(chapters_dir[lecture[2]])
+        		os.makedirs(chapters_dir[lecture[2]])
         	else:
         		print("Lecture already present ... Skipping")
         	directory = chapters_dir[lecture[2]]                      
@@ -169,7 +169,7 @@ def main(argv):
         elif opt in ('-d','--directory'):
             directory = os.path.expanduser(arg) if '~' in arg else os.path.abspath(arg)
     if not os.path.isdir(directory):
-    	os.mkdir(directory)
+    	os.makedirs(directory)
     
     session = requests.session()
     login(session,email,password)
