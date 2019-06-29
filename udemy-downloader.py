@@ -3,6 +3,8 @@ from lxml import html
 from bs4 import BeautifulSoup
 from urllib.parse import unquote
 import os
+import math
+from tqdm import tqdm, trange
 import sys, getopt
 
 headers = {
@@ -41,6 +43,8 @@ def login(session,email,password):
     access_token = res.cookies.get('access_token','')
     if access_token != '':
         print('You\'re in...')
+    else:
+        print('Error in login')
     client_id = res.cookies.get('client_id','')
     session.headers['authorization'] = "Bearer {0}".format(access_token)
     session.headers['client_id'] = client_id
@@ -61,7 +65,7 @@ def get_subscribed_courses(session):
 
     response = session.get(subscribed_url, params=params)
     subscribed_course_details = response.json()
-    no_of_course = subscribed_course_details['count']
+    no_of_course = subscribed_course_details.get('count',0)
     course_id = []
     if no_of_course>0:
         for course in subscribed_course_details['results']:
@@ -109,11 +113,21 @@ def download_asset(session,course_id,lecture,directory=os.getcwd()):
         ext = url.split('/')[-1].split('?')[0].split('.')[-1]
         vid_name = filename + '.'+  ext
         if not os.path.isfile(os.path.join(directory,vid_name)):
-        	res = session.get(url)
-        	with open(os.path.join(directory,vid_name),'wb') as fb:
-        		fb.write(res.content)                
+            tqdm.write(f'{filename} ')
+            r = session.get(url, stream=True)
+            total = r.headers.get('content-length')
+            with open(os.path.join(directory,vid_name),'wb') as f:
+                if total is None:
+                    f.write(response.content)
+                else:
+                    total = int(total)
+                    for chunk in tqdm(r.iter_content(chunk_size=1024), total=math.ceil(total//1024), unit='KB', unit_scale=True):
+                        if chunk:
+                            f.write(chunk)
+                            f.flush()
+                print('Finished ' + filename)
         else:
-        	print("Lecture already present ... Skipping")
+        	tqdm.write(f'{filename} already exists, skipping.')
 
 
 
@@ -128,14 +142,14 @@ def download_course(session,course_id,directory=os.getcwd()):
         chapters_dir[chap[2]] = os.path.join(directory,chap[2])
     for i,lecture in enumerate(lectures):
         if lecture[0]=='chapter':
-        	print("{0}/{1} Downloading... Title : {2}".format(i,len(lectures),lecture[2]))
+        	print("{0}/{1} Downloading... ".format(i,len(lectures)))
         	if not os.path.isdir(chapters_dir[lecture[2]]):
         		os.makedirs(chapters_dir[lecture[2]])
         	else:
-        		print("Lecture already present ... Skipping")
+        		tqdm.write(f'{lecture[2]} already exists, skipping.')
         	directory = chapters_dir[lecture[2]]                      
         else:
-        	print("{0}/{1} Downloading... Title : {2}".format(i,len(lectures),lecture[2]))
+        	print("{0}/{1} Downloading... ".format(i,len(lectures)))
         	download_asset(session,course_id,lecture,directory)
      		
 
