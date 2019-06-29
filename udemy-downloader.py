@@ -102,21 +102,21 @@ def get_lecture_assets(session,course_id,lecture_id):
 
 
 
-def download_asset(session,course_id,lecture,directory=os.getcwd()):
+def download_asset(session,course_id,lecture,lesson_counter,directory=os.getcwd()):
     if lecture[0]=="lecture":
         asset_detail = get_lecture_assets(session,course_id,lecture[1])
-        filename = '_'.join(lecture[2].split(' '))
+        filename = lecture[2]
         urls = asset_detail.get('asset').get('download_urls',None)
         if urls ==None:
             urls = asset_detail.get('asset').get('stream_urls',None)
         url = urls['Video'][0]['file']
         ext = url.split('/')[-1].split('?')[0].split('.')[-1]
         vid_name = filename + '.'+  ext
-        if not os.path.isfile(os.path.join(directory,vid_name)):
+        if not os.path.isfile(os.path.join(directory,str(lesson_counter)+"_"+vid_name)):
             tqdm.write(f'{filename} ')
             r = session.get(url, stream=True)
             total = r.headers.get('content-length')
-            with open(os.path.join(directory,vid_name),'wb') as f:
+            with open(os.path.join(directory,str(lesson_counter)+"_"+vid_name),'wb') as f:
                 if total is None:
                     f.write(response.content)
                 else:
@@ -137,11 +137,13 @@ def download_course(session,course_id,directory=os.getcwd()):
     directory = os.path.join(directory,course_id[1])
     lectures = get_course_lecture_info(session,course_id[0])
     chapters = [chap for chap in lectures if chap[0]=='chapter']
+    lesson_counter = 1
     chapters_dir = {}
-    for chap in chapters:
-        chapters_dir[chap[2]] = os.path.join(directory,chap[2])
+    for i,chap in enumerate(chapters):
+        chapters_dir[chap[2]] = os.path.join(directory,str(i+1)+"_"+chap[2])
     for i,lecture in enumerate(lectures):
         if lecture[0]=='chapter':
+        	lesson_counter = 1
         	print("{0}/{1} Downloading... ".format(i,len(lectures)))
         	if not os.path.isdir(chapters_dir[lecture[2]]):
         		os.makedirs(chapters_dir[lecture[2]])
@@ -150,14 +152,16 @@ def download_course(session,course_id,directory=os.getcwd()):
         	directory = chapters_dir[lecture[2]]                      
         else:
         	print("{0}/{1} Downloading... ".format(i,len(lectures)))
-        	download_asset(session,course_id,lecture,directory)
+        	download_asset(session,course_id,lecture,lesson_counter,directory)
+        	lesson_counter+=1
      		
 
 
 def download_all_courses(session,directory=os.getcwd()):
     courses = get_subscribed_courses(session)
     for course in courses:
-        download_course(session,course,directory)
+    	tqdm.write(f'\nDownloading course  {course[1]}')
+    	download_course(session,course,directory)
 
 
 def main(argv):
