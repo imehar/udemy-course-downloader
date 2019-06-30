@@ -16,8 +16,8 @@ headers = {
 base_url = "https://www.udemy.com/"
 login_url = base_url + "join/login-popup/"
 subscribed_url = base_url + 'api-2.0/users/me/subscribed-courses'
-asset_of_lec  = 'https://www.udemy.com/api-2.0/users/me/subscribed-courses/{0}/lectures/{1}'
-course_info_url = 'https://www.udemy.com/api-2.0/courses/{0}/subscriber-curriculum-items/'
+asset_of_lec  = base_url + 'api-2.0/users/me/subscribed-courses/{0}/lectures/{1}'
+course_info_url = base_url + 'api-2.0/courses/{0}/subscriber-curriculum-items/'
 
 def login(session,email,password):
     params = (
@@ -112,6 +112,7 @@ def download_asset(session,course_id,lecture,lesson_counter,directory=os.getcwd(
         url = urls['Video'][0]['file']
         ext = url.split('/')[-1].split('?')[0].split('.')[-1]
         vid_name = filename + '.'+  ext
+        vid_name = vid_name.replace("/","-").strip()
         if not os.path.isfile(os.path.join(directory,str(lesson_counter)+"_"+vid_name)):
             tqdm.write(f'{filename} ')
             r = session.get(url, stream=True)
@@ -140,7 +141,7 @@ def download_course(session,course_id,directory=os.getcwd()):
     lesson_counter = 1
     chapters_dir = {}
     for i,chap in enumerate(chapters):
-        chapters_dir[chap[2]] = os.path.join(directory,str(i+1)+"_"+chap[2])
+        chapters_dir[chap[2]] = os.path.join(directory,str(i+1)+"_"+chap[2].replace("/","-").strip())
     for i,lecture in enumerate(lectures):
         if lecture[0]=='chapter':
         	lesson_counter = 1
