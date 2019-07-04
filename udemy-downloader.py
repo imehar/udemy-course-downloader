@@ -44,7 +44,7 @@ def login(session,email,password):
     if access_token != '':
         print('You\'re in...')
     else:
-        print('Error in login')
+        print('Login Error ... Check your email and password')
     client_id = res.cookies.get('client_id','')
     session.headers['authorization'] = "Bearer {0}".format(access_token)
     session.headers['client_id'] = client_id
@@ -189,7 +189,9 @@ def main(argv):
             directory = os.path.expanduser(arg) if '~' in arg else os.path.abspath(arg)
     if not os.path.isdir(directory):
     	os.makedirs(directory)
-    
+    if email==None or password==None:
+    	print(errorMessage)
+    	sys.exit(2)
     session = requests.session()
     login(session,email,password)
     download_all_courses(session,directory)
