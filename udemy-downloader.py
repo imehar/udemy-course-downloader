@@ -96,7 +96,7 @@ def get_lecture_assets(session,course_id,lecture_id):
         ('fields[course]','id,url,locale'),
         ('fields[lecture&=','@default,course,can_give_cc_feedback,can_see_cc_feedback_popup,download_url'),
     )
-    assets_url = asset_of_lec.format(466000,7141990)
+    assets_url = asset_of_lec.format(course_id,lecture_id)
     response = session.get(assets_url, params=params)
     return response.json()
 
@@ -153,7 +153,7 @@ def download_course(session,course_id,directory=os.getcwd()):
         	directory = chapters_dir[lecture[2]]                      
         else:
         	print("{0}/{1} Downloading... ".format(i,len(lectures)))
-        	download_asset(session,course_id,lecture,lesson_counter,directory)
+        	download_asset(session,course_id[0],lecture,lesson_counter,directory)
         	lesson_counter+=1
      		
 
